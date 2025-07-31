@@ -37,7 +37,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.REPO_B_ACCESS_TOKEN }}
-          repository: Swati59-cmd/YourInfraRepoName
+          repository: "Swati59-cmd/Containerized-Web-Application"
           event-type: deploy-${{ github.ref_name }}
           client-payload: >-
             {
