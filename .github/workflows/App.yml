@@ -39,7 +39,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.REPO_B_ACCESS_TOKEN }}
-          repository: your-username/infra-repo
+          repository: Swati59-cmd/YourInfraRepoName
           event-type: deploy-${{ github.ref_name }}
           client-payload: >-
             {
