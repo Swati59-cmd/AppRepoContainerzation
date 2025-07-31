@@ -12,7 +12,7 @@ jobs:
       AWS_REGION: us-east-1
       IMAGE_TAG: ${{ github.sha }}
       ECR_REPO_NAME: ${{ github.ref_name == 'dev' && 'devpython' || github.ref_name == 'stage' && 'stagepython' || 'prodpython' }}
-
+      GITHUB_TOKEN: ${{ secrets.REPO_B_ACCESS_TOKEN }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -33,15 +33,17 @@ jobs:
           docker tag $ECR_REPO_NAME:$IMAGE_TAG ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$IMAGE_TAG
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$IMAGE_TAG
 
-      - name: Trigger Terraform Deploy Repo
+      - name: Trigger Terraform Workflow in Infra Repo
         uses: peter-evans/repository-dispatch@v2
         with:
-          token: ${{ secrets.REPO_B_ACCESS_TOKEN }}
-          repository: "Swati59-cmd/Containerized-Web-Application"
-          event-type: deploy-${{ github.ref_name }}
-          client-payload: >-
-            {
-              "image_tag": "${{ github.sha }}",
-              "ecr_repo_name": "${{ env.ECR_REPO_NAME }}",
-              "environment": "${{ github.ref_name }}"
-            }
+            repository: Swati59-cmd/Swati59-cmd-Containerized-Web-Application
+            event-type: deploy-dev
+            client-payload: >-
+                 {
+                     "image_tag": "${{ github.sha }}",
+                     "ecr_repo_name": "devpython",
+                       "environment": "dev"
+                 }
+  
+   
+
