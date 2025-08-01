@@ -9,7 +9,7 @@ env:
   AWS_REGION: us-east-1
   IMAGE_TAG: ${{ github.sha }}
   ECR_REPO_NAME: devpython
-  CLUSTER_NAME: dev-cluster
+  CLUSTER_NAME: dev-ecs-cluster
   SERVICE_NAME: dev-service
 
 jobs:
