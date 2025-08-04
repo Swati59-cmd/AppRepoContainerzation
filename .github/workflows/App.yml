@@ -38,17 +38,17 @@ jobs:
       - name: Update ECS Task Definition with new image
         id: task-def
         run: |
-          # Set ECR image URI
+          
           IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPO_NAME:$IMAGE_TAG"
 
-          # Get current task definition ARN
+          
           TASK_DEF_ARN=$(aws ecs describe-services \
             --cluster $CLUSTER_NAME \
             --services $SERVICE_NAME \
             --query "services[0].taskDefinition" \
             --output text)
 
-          # Get and clean up task definition JSON
+          
           aws ecs describe-task-definition --task-definition $TASK_DEF_ARN \
             --query "taskDefinition | {
               family: family,
@@ -60,12 +60,12 @@ jobs:
               memory: memory
             }" > task-def.json
 
-          # Replace image in container definition
+          
           jq --arg IMAGE "$IMAGE_URI" \
              '.containerDefinitions[0].image = $IMAGE' \
              task-def.json > new-task-def.json
 
-          # Register new task definition
+          
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
             --cli-input-json file://new-task-def.json \
             --query "taskDefinition.taskDefinitionArn" \
