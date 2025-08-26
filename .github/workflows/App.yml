@@ -2,14 +2,11 @@ name: App CI/CD
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, stage, main]
 
 env:
   AWS_REGION: us-east-1
   IMAGE_TAG: ${{ github.sha }}
-  ECR_REPO_NAME: devpython
-  CLUSTER_NAME: dev-ecs-cluster
-  SERVICE_NAME: dev-service
 
 jobs:
   build-and-deploy:
@@ -26,6 +23,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Set Variables 
+        id: env-setup
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "dev" ]]; then
+            echo "ECR_REPO_NAME=devpython" >> $GITHUB_ENV
+            echo "CLUSTER_NAME=dev-ecs-cluster" >> $GITHUB_ENV
+            echo "SERVICE_NAME=dev-service" >> $GITHUB_ENV
+          elif [[ "${GITHUB_REF_NAME}" == "stage" ]]; then
+            echo "ECR_REPO_NAME=stagepython" >> $GITHUB_ENV
+            echo "CLUSTER_NAME=stage-ecs-cluster" >> $GITHUB_ENV
+            echo "SERVICE_NAME=stage-service" >> $GITHUB_ENV
+          elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            echo "ECR_REPO_NAME=mainpython" >> $GITHUB_ENV
+            echo "CLUSTER_NAME=main-ecs-cluster" >> $GITHUB_ENV
+            echo "SERVICE_NAME=main-service" >> $GITHUB_ENV
+          fi
+
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
@@ -38,17 +52,14 @@ jobs:
       - name: Update ECS Task Definition with new image
         id: task-def
         run: |
-          
           IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$ECR_REPO_NAME:$IMAGE_TAG"
 
-          
           TASK_DEF_ARN=$(aws ecs describe-services \
             --cluster $CLUSTER_NAME \
             --services $SERVICE_NAME \
             --query "services[0].taskDefinition" \
             --output text)
 
-          
           aws ecs describe-task-definition --task-definition $TASK_DEF_ARN \
             --query "taskDefinition | {
               family: family,
@@ -60,12 +71,10 @@ jobs:
               memory: memory
             }" > task-def.json
 
-          
           jq --arg IMAGE "$IMAGE_URI" \
              '.containerDefinitions[0].image = $IMAGE' \
              task-def.json > new-task-def.json
 
-          
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
             --cli-input-json file://new-task-def.json \
             --query "taskDefinition.taskDefinitionArn" \
